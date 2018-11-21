@@ -12,6 +12,7 @@
     "exceptional.js": "^0.6.2",
     "express": "^4.16.4",
     "helmet": "^3.15.0",
+    "http-shutdown": "^1.2.0",
     "moment": "^2.22.2",
     "mongodb": "^3.1.10",
     "morgan": "^1.9.1",
