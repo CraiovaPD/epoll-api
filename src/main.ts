@@ -12,7 +12,7 @@ import {ProcessManager} from './util/process/manager';
 import {Logger} from './util/process/logger';
 import {accessLogger} from './util/http/accessLogger';
 
-import {NovaBoker} from './app';
+import {EPoll} from './app';
 
 // var log = require('why-is-node-running');
 
@@ -22,7 +22,7 @@ require('http-shutdown').extend();
 let pm = new ProcessManager();
 let app: express.Express | null = null;
 let server: http.Server | null = null;
-let novabooker: NovaBoker | null = null;
+let epoll: EPoll | null = null;
 
 pm.once('start', async () => {
   try {
@@ -47,8 +47,8 @@ async function bootstrap () {
   app = express();
   server = http.createServer(app);
 
-  novabooker = new NovaBoker();
-  await novabooker.start();
+  epoll = new EPoll();
+  await epoll.start();
 
   // to be used only with a frontend (nginx or any load balancer)
   // (by default req.ip will ignore the 'x-forwarded-for' header)
@@ -89,10 +89,10 @@ async function bootstrap () {
   }));
 
   // load API gateway
-  if (!novabooker.apiGateway) {
+  if (!epoll.apiGateway) {
     throw new Error('API GATEWAY NOT INITIALIZED.');
   }
-  app.use(novabooker.apiGateway.router);
+  app.use(epoll.apiGateway.router);
 
   // configure static routes
   app.use(express.static(nconf.get('fileStore:path'), {
@@ -120,8 +120,8 @@ async function bootstrap () {
 
 async function tearDown () {
   try {
-    if (novabooker)
-      await novabooker.stop();
+    if (epoll)
+      await epoll.stop();
     Logger.get().write('server closed gracefully.');
 
     // log();

@@ -24,7 +24,7 @@ import {get as ApiGatewayFactory, ApiGateway} from './gateway';
  *
  * @author Dragos Sebestin
  */
-export class NovaBoker {
+export class EPoll {
   private _mongoClients: MongoClient[] = [];
 
   public serviceRegistry = new ServiceRegistry(); // make it public for import usage
