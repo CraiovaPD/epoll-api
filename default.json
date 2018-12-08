@@ -29,6 +29,17 @@
     "db": {
       "url": "mongodb://localhost:27017",
       "name": "api-epoll-users"
+    },
+
+    "authorization": {
+      "OAuthClients": [{
+        "id": "epoll-web",
+        "secret": "secret1"
+      }],
+      "facebookAccountKit": {
+        "appId": "2091368724509165",
+        "appSecret": "495275a0e5cd8297cf190ab1abb2471a"
+      }
     }
   }
 }

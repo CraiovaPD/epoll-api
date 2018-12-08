@@ -1,20 +1,22 @@
 import {Db} from 'mongodb';
 
-import * as MongoHelper from '../../util/helpers/mongo';
-import {MongoRepository} from '../../util/storage/mongoRepository';
 import {UserService} from './service';
-import { IUser } from './core/IUser';
+import { IApiClient } from './core/authentication/IApiClient';
 
 export function get (
-  usersDb: Db
+  usersDb: Db,
+  akClientId: string,
+  akClientSecret: string,
+  apiClients: IApiClient[]
 ) : UserService {
 
   let usersCollection = usersDb.collection('users');
-  MongoHelper.ensureIndex(usersCollection, 'phone', true);
-  let usersRepo = new MongoRepository<IUser>(usersCollection);
+  let refreshTokensCollection = usersDb.collection('refresh-tokens');
+  let akTokensCollection = usersDb.collection('account-kit-tokens');
 
   let service = new UserService(
-    usersRepo
+    usersCollection, akClientId, akClientSecret,
+    akTokensCollection, refreshTokensCollection, apiClients
   );
 
   return service;

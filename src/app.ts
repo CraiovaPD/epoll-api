@@ -75,9 +75,11 @@ export class EPoll {
     this._mongoClients.push(mongoClient);
 
     let db = mongoClient.db(nconf.get('user:db:name'));
-    db;
     let userService = UserServiceFactory(
-      db
+      db,
+      nconf.get('user:authorization:facebookAccountKit:appId'),
+      nconf.get('user:authorization:facebookAccountKit:appSecret'),
+      nconf.get('user:authorization:OAuthClients')
     );
     this.serviceRegistry.add(userService);
   }
