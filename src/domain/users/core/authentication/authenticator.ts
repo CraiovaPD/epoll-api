@@ -77,7 +77,7 @@ export class Authenticator {
       ); // six months expire time
     } else if (request.grantType === GrantType.resourceOwnerClientCredentials) {
       if (!request.clientSecret) {
-        throw EXCEPTIONAL.InputValidationException(1, {
+        throw EXCEPTIONAL.InputValidationException(3, {
           message: 'Secret missing.'
         });
       }

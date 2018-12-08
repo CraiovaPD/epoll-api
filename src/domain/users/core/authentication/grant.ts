@@ -165,11 +165,11 @@ export class RefreshTokenGrant implements IAuthenticationGrant {
     await this._tokenRepo.remove({_id: this._refreshTokenId});
 
     // generate new access token
-    let token: IAccessTokenData = {
+    let tokenData: IAccessTokenData = {
       _id: refreshToken.userId,
       scope: this.scope
     };
-    let accessToken = jwt.sign(token, this._clientSecret, {
+    let accessToken = jwt.sign(tokenData, this._clientSecret, {
       expiresIn: this._accessTokenTtl,
       subject: this._clientId
     });
@@ -178,7 +178,7 @@ export class RefreshTokenGrant implements IAuthenticationGrant {
       tokenType: 'Bearer',
       expiresIn: this._accessTokenTtl,
       accessToken: accessToken,
-      refreshToken: refreshToken._id.toString(),
+      refreshToken: newRefreshToken._id.toString(),
       state: this._state
     };
   }

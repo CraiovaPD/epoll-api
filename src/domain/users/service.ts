@@ -187,7 +187,8 @@ export class UserService implements IService {
       grantType: GrantType.refreshToken,
       clientId: params.clientId,
       clientSecret: params.clientSecret,
-      state: params.state
+      state: params.state,
+      extraPayload: params.oldRefreshToken
     }, user);
   }
 }
