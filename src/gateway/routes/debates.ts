@@ -2,7 +2,7 @@ import * as express from 'express';
 // import * as nconf from 'nconf';
 // import * as multer from 'multer';
 // import * as path from 'path';
-// import {ObjectID} from 'mongodb';
+import {ObjectID} from 'mongodb';
 import {Schema} from 'inpt.js';
 
 // import {isAuthorized} from '../authorization';
@@ -56,6 +56,46 @@ export function get (
     try {
       res.send(await debates.listPolls({
         limit: req.body.limit
+      }));
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  /**
+   * Route used adding a new option to an existing poll.
+   */
+  router.post('/debate/poll/:id/option', transform(new Schema({
+    reason: Schema.Types.String
+  })), async (
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    try {
+      res.send(await debates.addPollOption({
+        pollId: new ObjectID(req.params.id),
+        newOptionReason: req.body.reason
+      }));
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  /**
+   * Route used removing an option from an existing poll.
+   */
+  router.delete('/debate/poll/:id/option/:optionId', transform(new Schema({
+    reason: Schema.Types.String
+  })), async (
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    try {
+      res.send(await debates.removePollOption({
+        pollId: new ObjectID(req.params.id),
+        optionId: new ObjectID(req.params.optionId)
       }));
     } catch (err) {
       next(err);

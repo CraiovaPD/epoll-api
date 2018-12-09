@@ -8,6 +8,7 @@ import {
   IPollDebate as IPollDebateInternal
 } from './core/IDebate';
 import { Debate } from './core/debate';
+import { PollDebate } from './core/pollDebate';
 
 // utils
 import * as StringUtil from '../../util/helpers/string';
@@ -134,5 +135,77 @@ export class DebateService implements IService {
         }
       };
     }).toArray();
+  }
+
+  /**
+   * Add poll option.
+   */
+  async addPollOption (params: {
+    pollId: ObjectID,
+    newOptionReason: string
+  }) : Promise<{
+    _id: string,
+    reason: string
+  }> {
+    let newOption = {
+      _id: new ObjectID(),
+      reason: String(params.newOptionReason).trim()
+    };
+
+    let poll = new PollDebate(await this._findDebateById(
+      params.pollId
+    ));
+    poll.addOption(newOption);
+
+    await this._debatesCollection.updateOne({
+      _id: poll._id
+    }, {
+      $set: {
+        'payload.options': poll.payload.options
+      }
+    });
+
+    return {
+      _id: String(newOption._id),
+      reason: newOption.reason
+    };
+  }
+
+  /**
+   * Remove a poll option.
+   */
+  async removePollOption (params: {
+    pollId: ObjectID,
+    optionId: ObjectID
+  }) : Promise<void> {
+    let poll = new PollDebate(await this._findDebateById(
+      params.pollId
+    ));
+    poll.removeOption(params.optionId);
+
+    await this._debatesCollection.updateOne({
+      _id: poll._id
+    }, {
+      $set: {
+        'payload.options': poll.payload.options
+      }
+    });
+  }
+
+  /**
+   * Find a debate by id.
+   */
+  private async _findDebateById (_id: ObjectID) : Promise<IDebateInternal<any>> {
+    let found = await this._debatesCollection.findOne({
+      _id
+    });
+
+    if (!found) {
+      throw EXCEPTIONAL.NotFoundException(10, {
+        debateId: _id
+      });
+    }
+
+    return found;
   }
 }
