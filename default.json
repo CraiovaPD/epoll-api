@@ -28,7 +28,7 @@
   "user": {
     "db": {
       "url": "mongodb://localhost:27017",
-      "name": "api-epoll-users"
+      "name": "api-epoll-general"
     },
 
     "authorization": {
@@ -40,6 +40,13 @@
         "appId": "2091368724509165",
         "appSecret": "495275a0e5cd8297cf190ab1abb2471a"
       }
+    }
+  },
+
+  "debate": {
+    "db": {
+      "url": "mongodb://localhost:27017",
+      "name": "api-epoll-general"
     }
   }
 }

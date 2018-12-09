@@ -12,6 +12,7 @@ import {ServiceRegistry} from '../application/serviceRegistry';
 
 // routes
 import {get as UserRoutes} from './routes/users';
+import {get as DebateRoutes} from './routes/debates';
 const EXCEPTIONAL = context('default');
 
 /**
@@ -37,6 +38,7 @@ export class ApiGateway {
     // load api routes
     let apiRouter = express.Router();
     apiRouter.use(UserRoutes(registry));
+    apiRouter.use(DebateRoutes(registry));
 
     this.router.use(`/api/${apiVersion}`, apiRouter);
 

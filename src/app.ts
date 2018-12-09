@@ -15,6 +15,7 @@ import {Logger} from './util/process/logger';
 // import {RateLimiter} from './application/rateLimiter';
 import {ServiceRegistry} from './application/serviceRegistry';
 import {get as UserServiceFactory} from './domain/users';
+import {get as DebateServiceFactory} from './domain/debates';
 
 // gateway
 import {get as ApiGatewayFactory, ApiGateway} from './gateway';
@@ -45,6 +46,7 @@ export class EPoll {
   async start () {
     // init services
     await this._initUsers();
+    await this._initDebates();
 
     // init api gateway
     await this._initGateway();
@@ -82,6 +84,24 @@ export class EPoll {
       nconf.get('user:authorization:OAuthClients')
     );
     this.serviceRegistry.add(userService);
+  }
+
+  /**
+   * Initialize the debate service.
+   */
+  private async _initDebates () {
+    let mongoClient = await MongoClient.connect(
+      nconf.get('debate:db:url'), {
+        useNewUrlParser: true
+      }
+    );
+    this._mongoClients.push(mongoClient);
+
+    let db = mongoClient.db(nconf.get('debate:db:name'));
+    let debateService = DebateServiceFactory(
+      db
+    );
+    this.serviceRegistry.add(debateService);
   }
 
   /**
