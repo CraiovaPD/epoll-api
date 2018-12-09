@@ -7,15 +7,16 @@ import EPollErrors from 'epoll-errors';
 import {Logger} from './util/process/logger';
 // import {MongoRepository} from './util/storage/mongoRepository';
 // import * as MongoHelper from './util/helpers/mongo';
-// import {IFileStore} from './util/storage/IFileStore';
-// import {DiskStore} from './util/storage/diskStore';
-// import {S3Store} from './util/storage/s3Store';
+import {IFileStore} from './util/storage/IFileStore';
+import {DiskStore} from './util/storage/diskStore';
+import {S3Store} from './util/storage/s3Store';
 
 // services
 // import {RateLimiter} from './application/rateLimiter';
 import {ServiceRegistry} from './application/serviceRegistry';
 import {get as UserServiceFactory} from './domain/users';
 import {get as DebateServiceFactory} from './domain/debates';
+import {get as StorageServiceFactory} from './domain/storage';
 
 // gateway
 import {get as ApiGatewayFactory, ApiGateway} from './gateway';
@@ -47,6 +48,7 @@ export class EPoll {
     // init services
     await this._initUsers();
     await this._initDebates();
+    await this._initStorage();
 
     // init api gateway
     await this._initGateway();
@@ -102,6 +104,32 @@ export class EPoll {
       db
     );
     this.serviceRegistry.add(debateService);
+  }
+
+  /**
+   * Initialize the storage service.
+   */
+  private async _initStorage () {
+    let fileStore: IFileStore;
+    let isStorageLocal = true; // nconf.get('config') === 'debug'
+    if (isStorageLocal) {
+      fileStore = new DiskStore(
+        nconf.get('fileStore:path'),
+        nconf.get('hostname')
+      );
+    } else {
+      fileStore = new S3Store(
+        nconf.get('fileStore:path'),
+        nconf.get('fileStore:awsKeyId'),
+        nconf.get('fileStore:awsKeySecret'),
+        nconf.get('fileStore:bucketName')
+      );
+    }
+
+    let storageService = StorageServiceFactory(
+      nconf.get('fileStore:path'), fileStore
+    );
+    this.serviceRegistry.add(storageService);
   }
 
   /**

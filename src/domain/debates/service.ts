@@ -9,6 +9,7 @@ import {
 } from './core/IDebate';
 import { Debate } from './core/debate';
 import { PollDebate } from './core/pollDebate';
+import { IAttachment as IAttachmentInternal } from './core/IAttachment';
 
 // utils
 import * as StringUtil from '../../util/helpers/string';
@@ -18,6 +19,8 @@ import {
   IDebate, IPollDebate, DebateType,
   DebateState, IDebatePollListItem
 } from '../../types/debates/IDebate';
+import { IAttachment } from '../../types/debates/IAttachment';
+import { IFile } from '../storage/core/IFile';
 
 export const DEBATE_SERVICE_COMPONENT = 'epoll:debate';
 const EXCEPTIONAL = context(DEBATE_NAMESPACE);
@@ -60,7 +63,7 @@ export class DebateService implements IService {
           String(params.title).trim().toLowerCase()
         ),
         content: String(params.content).trim(),
-        attachements: [],
+        attachments: [],
         options: [],
         votes: {
           count: 0,
@@ -79,7 +82,7 @@ export class DebateService implements IService {
       payload: {
         title: newPoll.payload.title,
         content: newPoll.payload.content,
-        attachements: newPoll.payload.attachements.map(
+        attachments: newPoll.payload.attachments.map(
           (att: any) => {
             return att;
           }
@@ -188,6 +191,58 @@ export class DebateService implements IService {
     }, {
       $set: {
         'payload.options': poll.payload.options
+      }
+    });
+  }
+
+  /**
+   * Add a new attachment to a poll.
+   */
+  async addPollAttachment (params: {
+    pollId: ObjectID
+    file: IFile
+  }) : Promise<IAttachment> {
+    let newAttachment: IAttachmentInternal = {
+      _id: new ObjectID(),
+      file: params.file
+    };
+
+    let poll = new PollDebate(await this._findDebateById(
+      params.pollId
+    ));
+    poll.addAttachment(newAttachment);
+
+    await this._debatesCollection.updateOne({
+      _id: poll._id
+    }, {
+      $set: {
+        'payload.attachments': poll.payload.attachments
+      }
+    });
+
+    return {
+      _id: String(newAttachment._id),
+      file: newAttachment.file
+    };
+  }
+
+  /**
+   * Add a new attachment to a poll.
+   */
+  async removePollAttachment (params: {
+    pollId: ObjectID
+    attachmentId: ObjectID
+  }) : Promise<void> {
+    let poll = new PollDebate(await this._findDebateById(
+      params.pollId
+    ));
+    poll.removeAttachment(params.attachmentId);
+
+    await this._debatesCollection.updateOne({
+      _id: poll._id
+    }, {
+      $set: {
+        'payload.attachments': poll.payload.attachments
       }
     });
   }

@@ -2,6 +2,7 @@ import { ObjectID } from 'mongodb';
 
 import { Debate } from './debate';
 import { IPollDebate } from './IDebate';
+import { IAttachment } from './IAttachment';
 
 /**
  * Poll concrete class of a debate.
@@ -33,6 +34,26 @@ export class PollDebate extends Debate<IPollDebate> {
 
     if (~foundIndex) {
       this.payload.options.splice(foundIndex, 1);
+    }
+  }
+
+  /**
+   * Add a new attachment.
+   */
+  addAttachment (attachment: IAttachment) {
+    this.payload.attachments.push(attachment);
+  }
+
+  /**
+   * Remove an attachment from this poll.
+   */
+  removeAttachment (attachmentId: ObjectID) {
+    let foundIndex = this.payload.attachments.findIndex(
+      att => String(att._id) === String(attachmentId)
+    );
+
+    if (~foundIndex) {
+      this.payload.attachments.splice(foundIndex, 1);
     }
   }
 }

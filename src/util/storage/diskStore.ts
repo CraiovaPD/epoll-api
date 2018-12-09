@@ -73,9 +73,10 @@ export class DiskStore implements IFileStore {
    */
   private ensurePath(storagePath: string) {
     let sep = path.sep;
-    if (!storagePath.includes(sep))
-      sep = '/'
-       ;
+    if (!storagePath.includes(sep)) {
+      sep = '/';
+    }
+
     storagePath.split(sep).splice(1).reduce((parentDir, childDir) => {
       const curDir = path.join(parentDir, childDir);
       if (!fs.existsSync(curDir)) {
