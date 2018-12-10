@@ -15,6 +15,20 @@
         "${workspaceFolder}/build/**/*.js"
       ],
       "trace": "verbose"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "console": "integratedTerminal",
+      "name": "Launch Program Local Config",
+      "program": "${workspaceFolder}/src/main.ts",
+      "sourceMaps": true,
+      "outFiles": [
+        "${workspaceFolder}/build/**/*.js"
+      ],
+      "args": [
+        "--config-file-path", "D:/projects/epoll/epoll-api.conf.json"
+      ]
     }
   ]
 }

@@ -10,6 +10,7 @@ import {
 import { Debate } from './core/debate';
 import { PollDebate } from './core/pollDebate';
 import { IAttachment as IAttachmentInternal } from './core/IAttachment';
+import { IVote as IVoteInternal } from './core/IVote';
 
 // utils
 import * as StringUtil from '../../util/helpers/string';
@@ -21,6 +22,7 @@ import {
 } from '../../types/debates/IDebate';
 import { IAttachment } from '../../types/debates/IAttachment';
 import { IFile } from '../storage/core/IFile';
+import { IVote } from '../../types/debates/IVote';
 
 export const DEBATE_SERVICE_COMPONENT = 'epoll:debate';
 const EXCEPTIONAL = context(DEBATE_NAMESPACE);
@@ -141,6 +143,21 @@ export class DebateService implements IService {
   }
 
   /**
+   * Fetch a debate by id.
+   * @param params
+   */
+  async getDebateById (id: ObjectID) : Promise<IDebate<any>> {
+    let found = await this._findDebateById(id);
+
+    return {
+      _id: String(found._id),
+      createdAt: found.createdAt,
+      type: found.type,
+      state: found.state,
+      payload: found.payload
+    };
+  }
+  /**
    * Add poll option.
    */
   async addPollOption (params: {
@@ -245,6 +262,42 @@ export class DebateService implements IService {
         'payload.attachments': poll.payload.attachments
       }
     });
+  }
+
+  /**
+   * Add new pole vote.
+   */
+  async addPollVote (params: {
+    pollId: ObjectID,
+    userId: ObjectID,
+    optionId: ObjectID,
+  }) : Promise<IVote> {
+    let newVote: IVoteInternal = {
+      _id: new ObjectID(),
+      createdAt: new Date(),
+      userId: params.userId,
+      optionId: params.optionId
+    };
+
+    let poll = new PollDebate(await this._findDebateById(
+      params.pollId
+    ));
+    poll.addVote(newVote);
+
+    await this._debatesCollection.updateOne({
+      _id: poll._id
+    }, {
+      $set: {
+        'payload.votes': poll.payload.votes
+      }
+    });
+
+    return {
+      _id: String(newVote._id),
+      createdAt: newVote.createdAt,
+      userId: String(newVote.userId),
+      optionId: String(newVote.optionId)
+    };
   }
 
   /**

@@ -78,6 +78,25 @@ export function get (
   });
 
   /**
+   * Route used for fetching a debate by id.
+   */
+  router.get('/debate/:id', transform(new Schema({
+    limit: Schema.Types.Optional(Schema.Types.Number)
+  })), async (
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    try {
+      res.send(await debates.getDebateById(
+        new ObjectID(req.params.id)
+      ));
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  /**
    * Route used adding a new option to an existing poll.
    */
   router.post('/debate/poll/:id/option', transform(new Schema({
@@ -141,6 +160,50 @@ export function get (
       res.send(await debates.addPollAttachment({
         pollId: new ObjectID(req.params.id),
         file
+      }));
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  /**
+   * Route used removing an attachment from an existing poll.
+   */
+  router.delete('/debate/poll/:id/attachment/:attachmentId', uploader.single('attachment'),
+  transform(new Schema({
+    reason: Schema.Types.String
+  })), async (
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    try {
+      await debates.removePollAttachment({
+        pollId: new ObjectID(req.params.id),
+        attachmentId: new ObjectID(req.params.attachmentId)
+      });
+
+      res.end();
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  /**
+   * Route used adding a new vote to an existing poll.
+   */
+  router.post('/debate/poll/:id/vote', transform(new Schema({
+    optionId: Schema.Types.String
+  })), async (
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    try {
+      res.send(await debates.addPollVote({
+        pollId: new ObjectID(req.params.id),
+        userId: new ObjectID(),
+        optionId: new ObjectID(req.body.optionId)
       }));
     } catch (err) {
       next(err);

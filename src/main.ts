@@ -84,7 +84,8 @@ async function bootstrap () {
   app.use(compression());
   app.use(cors({
     origin: [
-      /localhost/i
+      /localhost/i,
+      /192.168.88/i
     ]
   }));
 
