@@ -5,15 +5,17 @@ import * as express from 'express';
 // import {ObjectID} from 'mongodb';
 import {Schema} from 'inpt.js';
 
-// import {isAuthorized} from '../authorization';
+import {isAuthorized} from '../authorization';
 import {transform} from '../transform';
 // import {throttle} from '../throttle';
 // import {RateLimiter} from '../../application/rateLimiter';
 import {ServiceRegistry} from '../../application/serviceRegistry';
 import {USER_SERVICE_COMPONENT, UserService} from '../../domain/users/service';
+import { IApiClient } from '../../domain/users/core/authentication/IApiClient';
 
 export function get (
-  registry: ServiceRegistry
+  registry: ServiceRegistry,
+  apiClients: IApiClient[]
 ) : express.Router {
   let router = express.Router();
 
@@ -97,6 +99,22 @@ export function get (
         oldRefreshToken: req.body.refreshToken
       });
       res.json(authentication);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  /**
+   * Method used for fetching own user profile.
+   */
+  router.get('/user/me', isAuthorized(apiClients), async (
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    try {
+      let user = await users.findUserById((req as any).user._id);
+      res.json(user);
     } catch (err) {
       next(err);
     }

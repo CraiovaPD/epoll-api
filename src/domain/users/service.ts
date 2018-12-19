@@ -12,6 +12,7 @@ import { IRefreshToken, GrantType } from './core/authentication/grant';
 import { FacebookAccountKitApi } from './core/accountKit';
 import { IAccountKitToken } from './core/IAccountKitToken';
 import { User } from './core/User';
+import { IUser } from '../../types/users/IUser';
 
 // types
 
@@ -72,7 +73,7 @@ export class UserService implements IService {
 
     return Object.assign({}, grantResponse, {
       timestamp: Date.now(),
-      userProfile: {
+      user: {
         _id: String(user._id),
         phone: user.phone,
         firstname: user.firstname,
@@ -190,5 +191,21 @@ export class UserService implements IService {
       state: params.state,
       extraPayload: params.oldRefreshToken
     }, user);
+  }
+
+  /**
+   * Find a user by id.
+   */
+  async findUserById (_id: ObjectID) : Promise<IUser> {
+    let found = await this._usersRepo.findOne({ _id });
+    if (!found) {
+      throw EXCEPTIONAL.NotFoundException(11, { id: _id });
+    }
+    return {
+      _id: String(found._id),
+      phone: found.phone,
+      firstname: found.firstname,
+      lastname: found.lastname
+    };
   }
 }
