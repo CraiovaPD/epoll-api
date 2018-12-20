@@ -10,9 +10,18 @@ export function get (
   apiClients: IApiClient[]
 ) : UserService {
 
+  // fetch collections
   let usersCollection = usersDb.collection('users');
   let refreshTokensCollection = usersDb.collection('refresh-tokens');
   let akTokensCollection = usersDb.collection('account-kit-tokens');
+
+  // create indexes
+  usersCollection.createIndex({
+    phone: 1
+  }, {unique: true});
+  akTokensCollection.createIndex({
+    code: 1
+  }, {unique: true});
 
   let service = new UserService(
     usersCollection, akClientId, akClientSecret,
