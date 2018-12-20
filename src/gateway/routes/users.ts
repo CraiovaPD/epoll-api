@@ -2,7 +2,7 @@ import * as express from 'express';
 // import * as nconf from 'nconf';
 // import * as multer from 'multer';
 // import * as path from 'path';
-// import {ObjectID} from 'mongodb';
+import {ObjectID} from 'mongodb';
 import {Schema} from 'inpt.js';
 
 import {isAuthorized} from '../authorization';
@@ -115,6 +115,42 @@ export function get (
     try {
       let user = await users.findUserById((req as any).user._id);
       res.json(user);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  /**
+   * Method used for fetching a user profile by id.
+   */
+  router.get('/user/:id', isAuthorized(apiClients), async (
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    try {
+      let user = await users.findUserById(
+        new ObjectID(req.params.id)
+      );
+      res.json(user);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  /**
+   * Method used for removing a user account.
+   */
+  router.delete('/user', isAuthorized(apiClients), async (
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    try {
+      await users.removeUserById(
+        new ObjectID((req as any).user._id)
+      );
+      res.end();
     } catch (err) {
       next(err);
     }

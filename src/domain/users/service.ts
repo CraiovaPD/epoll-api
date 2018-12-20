@@ -208,4 +208,13 @@ export class UserService implements IService {
       lastname: found.lastname
     };
   }
+
+  /**
+   * Remove a user account by id.
+   */
+  async removeUserById (id: ObjectID) : Promise<void> {
+    await this._usersRepo.deleteOne({
+      _id: id
+    });
+  }
 }
