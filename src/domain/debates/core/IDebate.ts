@@ -12,6 +12,7 @@ import { IVote } from './IVote';
 export interface IDebate<T> {
   _id: ObjectID,
   createdAt: Date,
+  createdBy: ObjectID,
   type: DebateType,
   state: DebateState,
   payload: T

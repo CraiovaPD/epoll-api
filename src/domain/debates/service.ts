@@ -53,11 +53,13 @@ export class DebateService implements IService {
    */
   async createPoll (params: {
     title: string,
-    content: string
+    content: string,
+    createdBy: ObjectID
   }) : Promise<IDebate<IPollDebate>> {
     let newPoll = new Debate<IPollDebateInternal>({
       _id: new ObjectID(),
       createdAt: new Date(),
+      createdBy: params.createdBy,
       type: DebateType.poll,
       state: DebateState.draft,
       payload: {
@@ -79,6 +81,7 @@ export class DebateService implements IService {
     return {
       _id: String(newPoll._id),
       createdAt: newPoll.createdAt,
+      createdBy: String(newPoll.createdBy),
       type: newPoll.type,
       state: newPoll.state,
       payload: {
@@ -152,6 +155,7 @@ export class DebateService implements IService {
     return {
       _id: String(found._id),
       createdAt: found.createdAt,
+      createdBy: String(found.createdBy),
       type: found.type,
       state: found.state,
       payload: found.payload
