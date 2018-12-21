@@ -4,7 +4,7 @@ import * as path from 'path';
 import {ObjectID} from 'mongodb';
 import {Schema} from 'inpt.js';
 
-// import {isAuthorized} from '../authorization';
+import {isAuthorized} from '../authorization';
 import {transform} from '../transform';
 // import {throttle} from '../throttle';
 // import {RateLimiter} from '../../application/rateLimiter';
@@ -16,9 +16,11 @@ import {
   STORAGE_SERVICE_COMPONENT, StorageService
 } from '../../domain/storage/service';
 import { IFile } from '../../domain/storage/core/IFile';
+import { IApiClient } from '../../domain/users/core/authentication/IApiClient';
 
 export function get (
-  registry: ServiceRegistry
+  registry: ServiceRegistry,
+  apiClients: IApiClient[]
 ) : express.Router {
   let router = express.Router();
 
@@ -35,11 +37,12 @@ export function get (
 
   let debates = registry.get(DEBATE_SERVICE_COMPONENT) as DebateService;
   let storage = registry.get(STORAGE_SERVICE_COMPONENT) as StorageService;
+  let authorization = isAuthorized(apiClients);
 
   /**
    * Route used for creating a new poll.
    */
-  router.post('/debate/poll', transform(new Schema({
+  router.post('/debate/poll', authorization, transform(new Schema({
     title: Schema.Types.String,
     content: Schema.Types.String
   })), async (
@@ -50,7 +53,8 @@ export function get (
     try {
       res.send(await debates.createPoll({
         title: req.body.title,
-        content: req.body.content
+        content: req.body.content,
+        createdBy: (req as any).user._id
       }));
       req; res;
     } catch (err) {
@@ -99,7 +103,7 @@ export function get (
   /**
    * Route used adding a new option to an existing poll.
    */
-  router.post('/debate/poll/:id/option', transform(new Schema({
+  router.post('/debate/poll/:id/option', authorization, transform(new Schema({
     reason: Schema.Types.String
   })), async (
     req: express.Request,
@@ -119,9 +123,11 @@ export function get (
   /**
    * Route used removing an option from an existing poll.
    */
-  router.delete('/debate/poll/:id/option/:optionId', transform(new Schema({
-    reason: Schema.Types.String
-  })), async (
+  router.delete('/debate/poll/:id/option/:optionId', authorization,
+    transform(new Schema({
+      reason: Schema.Types.String
+    })),
+  async (
     req: express.Request,
     res: express.Response,
     next: express.NextFunction
@@ -139,10 +145,13 @@ export function get (
   /**
    * Route used adding a new attachment to an existing poll.
    */
-  router.post('/debate/poll/:id/attachment', uploader.single('attachment'),
-  transform(new Schema({
-    reason: Schema.Types.String
-  })), async (
+  router.post('/debate/poll/:id/attachment',
+    authorization,
+    uploader.single('attachment'),
+    transform(new Schema({
+      reason: Schema.Types.String
+    })),
+  async (
     req: express.Request,
     res: express.Response,
     next: express.NextFunction
@@ -169,46 +178,55 @@ export function get (
   /**
    * Route used removing an attachment from an existing poll.
    */
-  router.delete('/debate/poll/:id/attachment/:attachmentId', uploader.single('attachment'),
-  transform(new Schema({
-    reason: Schema.Types.String
-  })), async (
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction
-  ) => {
-    try {
-      await debates.removePollAttachment({
-        pollId: new ObjectID(req.params.id),
-        attachmentId: new ObjectID(req.params.attachmentId)
-      });
+  router.delete(
+    '/debate/poll/:id/attachment/:attachmentId',
+    authorization,
+    transform(new Schema({
+      reason: Schema.Types.String
+    })),
+    async (
+      req: express.Request,
+      res: express.Response,
+      next: express.NextFunction
+    ) => {
+      try {
+        await debates.removePollAttachment({
+          pollId: new ObjectID(req.params.id),
+          attachmentId: new ObjectID(req.params.attachmentId)
+        });
 
-      res.end();
-    } catch (err) {
-      next(err);
+        res.end();
+      } catch (err) {
+        next(err);
+      }
     }
-  });
+  );
 
   /**
    * Route used adding a new vote to an existing poll.
    */
-  router.post('/debate/poll/:id/vote', transform(new Schema({
-    optionId: Schema.Types.String
-  })), async (
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction
-  ) => {
-    try {
-      res.send(await debates.addPollVote({
-        pollId: new ObjectID(req.params.id),
-        userId: new ObjectID(),
-        optionId: new ObjectID(req.body.optionId)
-      }));
-    } catch (err) {
-      next(err);
+  router.post(
+    '/debate/poll/:id/vote',
+    authorization,
+    transform(new Schema({
+      optionId: Schema.Types.String
+    })),
+    async (
+      req: express.Request,
+      res: express.Response,
+      next: express.NextFunction
+    ) => {
+      try {
+        res.send(await debates.addPollVote({
+          pollId: new ObjectID(req.params.id),
+          userId: new ObjectID((req as any).user._id),
+          optionId: new ObjectID(req.body.optionId)
+        }));
+      } catch (err) {
+        next(err);
+      }
     }
-  });
+  );
 
   return router;
 }

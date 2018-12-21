@@ -37,11 +37,9 @@ export class ApiGateway {
 
     // load api routes
     let apiRouter = express.Router();
-    apiRouter.use(UserRoutes(
-      registry,
-      nconf.get('user:authorization:OAuthClients')
-    ));
-    apiRouter.use(DebateRoutes(registry));
+    let apiClients = nconf.get('user:authorization:OAuthClients');
+    apiRouter.use(UserRoutes(registry, apiClients));
+    apiRouter.use(DebateRoutes(registry, apiClients));
 
     this.router.use(`/api/${apiVersion}`, apiRouter);
 
