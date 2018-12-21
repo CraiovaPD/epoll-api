@@ -85,7 +85,9 @@ async function bootstrap () {
   app.use(cors({
     origin: [
       /localhost/i,
-      /192.168.88/i
+      /192.168.88/i,
+      /cpd-epoll.ddns.net/i,
+      /100.113.74.115/i
     ]
   }));
 
