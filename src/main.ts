@@ -86,8 +86,7 @@ async function bootstrap () {
     origin: [
       /localhost/i,
       /192.168.88/i,
-      /cpd-epoll.ddns.net/i,
-      /100.113.74.115/i
+      /cpd-epoll.go.ro/i
     ]
   }));
 
