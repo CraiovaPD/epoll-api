@@ -12,7 +12,7 @@ import { IRefreshToken, GrantType } from './core/authentication/grant';
 import { FacebookAccountKitApi } from './core/accountKit';
 import { IAccountKitToken } from './core/IAccountKitToken';
 import { User } from './core/User';
-import { IUser } from '../../types/users/IUser';
+import { IUser, UserRole } from '../../types/users/IUser';
 
 // types
 
@@ -76,6 +76,7 @@ export class UserService implements IService {
       user: {
         _id: String(user._id),
         phone: user.phone,
+        role: user.role,
         firstname: user.firstname,
         lastname: user.lastname
       }
@@ -105,6 +106,7 @@ export class UserService implements IService {
     let user = new User({
       _id: new ObjectID(),
       phone: akProfile.phone.number,
+      role: UserRole.regular,
       firstname: params.firstname,
       lastname: params.lastname
     });
@@ -204,6 +206,7 @@ export class UserService implements IService {
     return {
       _id: String(found._id),
       phone: found.phone,
+      role: found.role,
       firstname: found.firstname,
       lastname: found.lastname
     };
