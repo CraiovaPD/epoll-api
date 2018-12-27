@@ -132,7 +132,7 @@ export class DebateService implements IService {
         createdAt: 1,
         type: 1,
         state: 1,
-        'payload.title': 1,
+        title: 1,
         'payload.votes.count': 1
       },
       limit: params.limit,
