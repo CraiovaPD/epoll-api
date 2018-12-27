@@ -5,7 +5,7 @@ import {ObjectID} from 'mongodb';
 import {Schema} from 'inpt.js';
 
 import {isAuthorized} from '../authorization';
-import {transform} from '../transform';
+import {transform, transformQ} from '../transform';
 // import {throttle} from '../throttle';
 // import {RateLimiter} from '../../application/rateLimiter';
 import {ServiceRegistry} from '../../application/serviceRegistry';
@@ -65,7 +65,9 @@ export function get (
   /**
    * Route used for listing polls.
    */
-  router.get('/debate/poll', transform(new Schema({
+  router.get('/debate/poll', transformQ(new Schema({
+    stateFrom: Schema.Types.Optional(Schema.Types.Number),
+    stateTo: Schema.Types.Optional(Schema.Types.Number),
     limit: Schema.Types.Optional(Schema.Types.Number)
   })), async (
     req: express.Request,
@@ -73,8 +75,16 @@ export function get (
     next: express.NextFunction
   ) => {
     try {
+      let state = undefined;
+      if (req.query.stateFrom && req.query.stateTo) {
+        state = {
+          from: req.query.stateFrom,
+          to: req.query.stateTo
+        };
+      }
       res.send(await debates.listPolls({
-        limit: req.body.limit
+        state,
+        limit: req.query.limit
       }));
     } catch (err) {
       next(err);
@@ -95,6 +105,28 @@ export function get (
       res.send(await debates.getDebateById(
         new ObjectID(req.params.id)
       ));
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  /**
+   * Route used for updating a debate by id.
+   */
+  router.put('/debate/:id', transform(new Schema({
+    title: Schema.Types.String,
+    content: Schema.Types.String
+  })), async (
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    try {
+      res.send(await debates.updateDebateById({
+        debateId: new ObjectID(req.params.id),
+        newTitle: req.body.title,
+        newContent: req.body.content,
+      }));
     } catch (err) {
       next(err);
     }

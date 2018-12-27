@@ -15,13 +15,13 @@ export interface IDebate<T> {
   createdBy: ObjectID,
   type: DebateType,
   state: DebateState,
+  title: string,
+  content: string,
   payload: T
 }
 
 // debate payload types
 export interface IPollDebate {
-  title: string,
-  content: string,
   attachments: any[],
   options: Array<{
     _id: ObjectID,

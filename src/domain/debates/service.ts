@@ -62,11 +62,11 @@ export class DebateService implements IService {
       createdBy: params.createdBy,
       type: DebateType.poll,
       state: DebateState.draft,
+      title: StringUtil.capitalize(
+        String(params.title).trim().toLowerCase()
+      ),
+      content: String(params.content).trim(),
       payload: {
-        title: StringUtil.capitalize(
-          String(params.title).trim().toLowerCase()
-        ),
-        content: String(params.content).trim(),
         attachments: [],
         options: [],
         votes: {
@@ -84,9 +84,9 @@ export class DebateService implements IService {
       createdBy: String(newPoll.createdBy),
       type: newPoll.type,
       state: newPoll.state,
+      title: newPoll.title,
+      content: newPoll.content,
       payload: {
-        title: newPoll.payload.title,
-        content: newPoll.payload.content,
         attachments: newPoll.payload.attachments.map(
           (att: any) => {
             return att;
@@ -112,15 +112,26 @@ export class DebateService implements IService {
    * List polls.
    */
   listPolls (params: {
+    state?: {
+      from: DebateState,
+      to: DebateState
+    },
     limit?: number
   }) : Promise<IDebatePollListItem[]> {
-    let q = this._debatesCollection.find({
-      type: DebateType.poll,
-      state: DebateState.published
-    }, {
+    let filters: any = {
+      type: DebateType.poll
+    };
+    if (params.state) {
+      filters.state = {
+        $gte: params.state.from,
+        $lte: params.state.to
+      };
+    }
+    let q = this._debatesCollection.find(filters, {
       projection: {
         createdAt: 1,
         type: 1,
+        state: 1,
         'payload.title': 1,
         'payload.votes.count': 1
       },
@@ -135,6 +146,8 @@ export class DebateService implements IService {
         _id: String(doc._id),
         createdAt: doc.createdAt,
         type: doc.type,
+        state: doc.state,
+        title: doc.title,
         payload: {
           title: doc.payload.title,
           votes: {
@@ -151,15 +164,7 @@ export class DebateService implements IService {
    */
   async getDebateById (id: ObjectID) : Promise<IDebate<any>> {
     let found = await this._findDebateById(id);
-
-    return {
-      _id: String(found._id),
-      createdAt: found.createdAt,
-      createdBy: String(found.createdBy),
-      type: found.type,
-      state: found.state,
-      payload: found.payload
-    };
+    return this._projectDebate(found);
   }
   /**
    * Add poll option.
@@ -305,6 +310,33 @@ export class DebateService implements IService {
   }
 
   /**
+   * Update a debate by id.
+   */
+  async updateDebateById (params: {
+    debateId: ObjectID,
+    newTitle: string,
+    newContent: string
+  }) : Promise<IDebate<any>> {
+    let found = new Debate(await this._findDebateById(params.debateId));
+
+    found.title = StringUtil.capitalize(
+      String(params.newTitle).trim().toLowerCase()
+    );
+    found.content = String(params.newContent).trim();
+
+    await this._debatesCollection.updateOne({
+      _id: found._id
+    }, {
+      $set: {
+        title: found.title,
+        content: found.content
+      }
+    });
+
+    return this._projectDebate(found);
+  }
+
+  /**
    * Find a debate by id.
    */
   private async _findDebateById (_id: ObjectID) : Promise<IDebateInternal<any>> {
@@ -319,5 +351,21 @@ export class DebateService implements IService {
     }
 
     return found;
+  }
+
+  /**
+   * Project a debate to it's external representation.
+   */
+  private _projectDebate (debate: IDebateInternal<any>) : IDebate<any> {
+    return {
+      _id: String(debate._id),
+      createdAt: debate.createdAt,
+      createdBy: String(debate.createdBy),
+      type: debate.type,
+      state: debate.state,
+      title: debate.title,
+      content: debate.content,
+      payload: debate.payload
+    };
   }
 }
