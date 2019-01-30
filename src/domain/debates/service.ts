@@ -116,6 +116,7 @@ export class DebateService implements IService {
    * List polls.
    */
   listPolls (params: {
+    fromId?: ObjectID,
     state?: {
       from: DebateState,
       to: DebateState
@@ -125,12 +126,20 @@ export class DebateService implements IService {
     let filters: any = {
       type: DebateType.poll
     };
+
+    if (params.fromId) {
+      filters._id = {
+        $lt: params.fromId
+      };
+    }
+
     if (params.state) {
       filters.state = {
         $gte: params.state.from,
         $lte: params.state.to
       };
     }
+
     let q = this._debatesCollection.find(filters, {
       projection: {
         createdAt: 1,
@@ -339,6 +348,24 @@ export class DebateService implements IService {
     return this._projectDebate(found);
   }
 
+  async updateDebateState (params: {
+    debateId: ObjectID,
+    newState: DebateState
+  }) : Promise<IDebate<any>> {
+    let found = new Debate(await this._findDebateById(params.debateId));
+
+    found.changeState(params.newState);
+    await this._debatesCollection.updateOne({
+      _id: found._id
+    }, {
+      $set: {
+        state: found.state
+      }
+    });
+
+    return this._projectDebate(found);
+  }
+
   /**
    * Create a new anouncement.
    */
@@ -438,6 +465,7 @@ export class DebateService implements IService {
    * List anouncements.
    */
   listAnouncements (params: {
+    fromId?: ObjectID,
     state?: {
       from: DebateState,
       to: DebateState
@@ -447,12 +475,20 @@ export class DebateService implements IService {
     let filters: any = {
       type: DebateType.anouncement
     };
+
+    if (params.fromId) {
+      filters._id = {
+        $lt: params.fromId
+      };
+    }
+
     if (params.state) {
       filters.state = {
         $gte: params.state.from,
         $lte: params.state.to
       };
     }
+
     let q = this._debatesCollection.find(filters, {
       projection: {
         createdAt: 1,

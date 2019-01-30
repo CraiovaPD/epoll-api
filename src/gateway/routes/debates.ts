@@ -66,6 +66,7 @@ export function get (
    * Route used for listing polls.
    */
   router.get('/debate/poll', transformQ(new Schema({
+    fromId: Schema.Types.Optional(Schema.Types.String),
     stateFrom: Schema.Types.Optional(Schema.Types.Number),
     stateTo: Schema.Types.Optional(Schema.Types.Number),
     limit: Schema.Types.Optional(Schema.Types.Number)
@@ -82,7 +83,13 @@ export function get (
           to: req.query.stateTo
         };
       }
+
+      let fromId: ObjectID | undefined;
+      if (req.query.fromId) {
+        fromId = new ObjectID(req.query.fromId);
+      }
       res.send(await debates.listPolls({
+        fromId,
         state,
         limit: req.query.limit
       }));
@@ -95,6 +102,7 @@ export function get (
    * Route used for listing anouncements.
    */
   router.get('/debate/anouncement', transformQ(new Schema({
+    fromId: Schema.Types.Optional(Schema.Types.String),
     stateFrom: Schema.Types.Optional(Schema.Types.Number),
     stateTo: Schema.Types.Optional(Schema.Types.Number),
     limit: Schema.Types.Optional(Schema.Types.Number)
@@ -111,7 +119,13 @@ export function get (
           to: req.query.stateTo
         };
       }
+
+      let fromId: ObjectID | undefined;
+      if (req.query.fromId) {
+        fromId = new ObjectID(req.query.fromId);
+      }
       res.send(await debates.listAnouncements({
+        fromId,
         state,
         limit: req.query.limit
       }));
@@ -155,6 +169,26 @@ export function get (
         debateId: new ObjectID(req.params.id),
         newTitle: req.body.title,
         newContent: req.body.content,
+      }));
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  /**
+   * Route used for updating a debate's state.
+   */
+  router.put('/debate/:id/state', transform(new Schema({
+    state: Schema.Types.Number
+  })), async (
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    try {
+      res.send(await debates.updateDebateState({
+        debateId: new ObjectID(req.params.id),
+        newState: req.body.state
       }));
     } catch (err) {
       next(err);
