@@ -3,6 +3,7 @@ import { ObjectID } from 'mongodb';
 // types
 import { DebateType, DebateState } from '../../../types/debates/IDebate';
 import { IVote } from './IVote';
+import { IAttachment } from './IAttachment';
 
 /**
  * General debate interface.
@@ -22,7 +23,7 @@ export interface IDebate<T> {
 
 // debate payload types
 export interface IPollDebate {
-  attachments: any[],
+  attachments: IAttachment[],
   options: Array<{
     _id: ObjectID,
     reason: string
@@ -31,4 +32,8 @@ export interface IPollDebate {
     count: number,
     data: IVote[]
   }
+}
+
+export interface IAnoucementDebate {
+  attachments: IAttachment[]
 }

@@ -92,6 +92,35 @@ export function get (
   });
 
   /**
+   * Route used for listing anouncements.
+   */
+  router.get('/debate/anouncement', transformQ(new Schema({
+    stateFrom: Schema.Types.Optional(Schema.Types.Number),
+    stateTo: Schema.Types.Optional(Schema.Types.Number),
+    limit: Schema.Types.Optional(Schema.Types.Number)
+  })), async (
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    try {
+      let state = undefined;
+      if (req.query.stateFrom && req.query.stateTo) {
+        state = {
+          from: req.query.stateFrom,
+          to: req.query.stateTo
+        };
+      }
+      res.send(await debates.listAnouncements({
+        state,
+        limit: req.query.limit
+      }));
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  /**
    * Route used for fetching a debate by id.
    */
   router.get('/debate/:id', transform(new Schema({
@@ -254,6 +283,89 @@ export function get (
           userId: new ObjectID((req as any).user._id),
           optionId: new ObjectID(req.body.optionId)
         }));
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
+
+  /**
+   * Route used for creating a new anouncement.
+   */
+  router.post('/debate/anouncement', authorization, transform(new Schema({
+    title: Schema.Types.String,
+    content: Schema.Types.String
+  })), async (
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    try {
+      res.send(await debates.createAnouncement({
+        title: req.body.title,
+        content: req.body.content,
+        createdBy: (req as any).user._id
+      }));
+      req; res;
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  /**
+   * Route used adding a new attachment to an existing anouncement.
+   */
+  router.post('/debate/anouncement/:id/attachment',
+    authorization,
+    uploader.single('attachment'),
+    transform(new Schema({
+      reason: Schema.Types.String
+    })),
+  async (
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    let file: IFile | undefined;
+    try {
+      file = await storage.createFileFromPath({
+        fileName: req.file.filename,
+        size: req.file.size,
+        mimeType: req.file.mimetype,
+        filePath: req.file.path,
+        originalName: req.file.originalname
+      });
+
+      res.send(await debates.addAnouncementAttachment({
+        anouncementId: new ObjectID(req.params.id),
+        file
+      }));
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  /**
+   * Route used removing an attachment from an existing anouncement.
+   */
+  router.delete(
+    '/debate/anouncement/:id/attachment/:attachmentId',
+    authorization,
+    transform(new Schema({
+      reason: Schema.Types.String
+    })),
+    async (
+      req: express.Request,
+      res: express.Response,
+      next: express.NextFunction
+    ) => {
+      try {
+        await debates.removeAnouncementAttachment({
+          anouncementId: new ObjectID(req.params.id),
+          attachmentId: new ObjectID(req.params.attachmentId)
+        });
+
+        res.end();
       } catch (err) {
         next(err);
       }

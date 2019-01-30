@@ -5,7 +5,8 @@ import {DEBATE_NAMESPACE} from 'epoll-errors';
 import {IService} from '../../application/IService';
 import {
   IDebate as IDebateInternal,
-  IPollDebate as IPollDebateInternal
+  IPollDebate as IPollDebateInternal,
+  IAnoucementDebate as IAnoucementDebateInternal
 } from './core/IDebate';
 import { Debate } from './core/debate';
 import { PollDebate } from './core/pollDebate';
@@ -18,11 +19,14 @@ import * as StringUtil from '../../util/helpers/string';
 // types
 import {
   IDebate, IPollDebate, DebateType,
-  DebateState, IDebatePollListItem
+  DebateState, IDebatePollListItem,
+  IAnouncementDebate,
+  IDebateAnouncementListItem
 } from '../../types/debates/IDebate';
 import { IAttachment } from '../../types/debates/IAttachment';
 import { IFile } from '../storage/core/IFile';
 import { IVote } from '../../types/debates/IVote';
+import { AnouncementDebate } from './core/anouncementDebate';
 
 export const DEBATE_SERVICE_COMPONENT = 'epoll:debate';
 const EXCEPTIONAL = context(DEBATE_NAMESPACE);
@@ -149,7 +153,6 @@ export class DebateService implements IService {
         state: doc.state,
         title: doc.title,
         payload: {
-          title: doc.payload.title,
           votes: {
             count: doc.payload.votes.count
           }
@@ -334,6 +337,147 @@ export class DebateService implements IService {
     });
 
     return this._projectDebate(found);
+  }
+
+  /**
+   * Create a new anouncement.
+   */
+  async createAnouncement (params: {
+    title: string,
+    content: string,
+    createdBy: ObjectID
+  }) : Promise<IDebate<IAnouncementDebate>> {
+    let newPoll = new Debate<IAnoucementDebateInternal>({
+      _id: new ObjectID(),
+      createdAt: new Date(),
+      createdBy: params.createdBy,
+      type: DebateType.anouncement,
+      state: DebateState.draft,
+      title: StringUtil.capitalize(
+        String(params.title).trim().toLowerCase()
+      ),
+      content: String(params.content).trim(),
+      payload: {
+        attachments: []
+      }
+    });
+
+    await this._debatesCollection.insertOne(newPoll);
+
+    return {
+      _id: String(newPoll._id),
+      createdAt: newPoll.createdAt,
+      createdBy: String(newPoll.createdBy),
+      type: newPoll.type,
+      state: newPoll.state,
+      title: newPoll.title,
+      content: newPoll.content,
+      payload: {
+        attachments: newPoll.payload.attachments.map(
+          (att: any) => {
+            return att;
+          }
+        )
+      }
+    };
+  }
+
+  /**
+   * Add a new attachment to an anouncement.
+   */
+  async addAnouncementAttachment (params: {
+    anouncementId: ObjectID
+    file: IFile
+  }) : Promise<IAttachment> {
+    let newAttachment: IAttachmentInternal = {
+      _id: new ObjectID(),
+      file: params.file
+    };
+
+    let anouncement = new AnouncementDebate(await this._findDebateById(
+      params.anouncementId
+    ));
+    anouncement.addAttachment(newAttachment);
+
+    await this._debatesCollection.updateOne({
+      _id: anouncement._id
+    }, {
+      $set: {
+        'payload.attachments': anouncement.payload.attachments
+      }
+    });
+
+    return {
+      _id: String(newAttachment._id),
+      file: newAttachment.file
+    };
+  }
+
+  /**
+   * Add a new attachment to an anouncement.
+   */
+  async removeAnouncementAttachment (params: {
+    anouncementId: ObjectID
+    attachmentId: ObjectID
+  }) : Promise<void> {
+    let anouncement = new PollDebate(await this._findDebateById(
+      params.anouncementId
+    ));
+    anouncement.removeAttachment(params.attachmentId);
+
+    await this._debatesCollection.updateOne({
+      _id: anouncement._id
+    }, {
+      $set: {
+        'payload.attachments': anouncement.payload.attachments
+      }
+    });
+  }
+
+  /**
+   * List anouncements.
+   */
+  listAnouncements (params: {
+    state?: {
+      from: DebateState,
+      to: DebateState
+    },
+    limit?: number
+  }) : Promise<IDebateAnouncementListItem[]> {
+    let filters: any = {
+      type: DebateType.anouncement
+    };
+    if (params.state) {
+      filters.state = {
+        $gte: params.state.from,
+        $lte: params.state.to
+      };
+    }
+    let q = this._debatesCollection.find(filters, {
+      projection: {
+        createdAt: 1,
+        type: 1,
+        state: 1,
+        title: 1,
+        payload: 1
+      },
+      limit: params.limit,
+      sort: {
+        _id: -1
+      }
+    });
+
+    return q.map(doc => {
+      return {
+        _id: String(doc._id),
+        createdAt: doc.createdAt,
+        type: doc.type,
+        state: doc.state,
+        title: doc.title,
+        payload: {
+        }
+      };
+    }).toArray();
   }
 
   /**
