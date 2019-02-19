@@ -86,7 +86,7 @@ async function bootstrap () {
     origin: [
       /localhost/i,
       /192.168.88/i,
-      /cpd-epoll.go.ro/i
+      /craiovapd.ro/i
     ]
   }));
 
