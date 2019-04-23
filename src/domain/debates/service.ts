@@ -66,9 +66,7 @@ export class DebateService implements IService {
       createdBy: params.createdBy,
       type: DebateType.poll,
       state: DebateState.draft,
-      title: StringUtil.capitalize(
-        String(params.title).trim().toLowerCase()
-      ),
+      title: String(params.title).trim(),
       content: String(params.content).trim(),
       payload: {
         attachments: [],
@@ -331,9 +329,7 @@ export class DebateService implements IService {
   }) : Promise<IDebate<any>> {
     let found = new Debate(await this._findDebateById(params.debateId));
 
-    found.title = StringUtil.capitalize(
-      String(params.newTitle).trim().toLowerCase()
-    );
+    found.title = String(params.newTitle).trim();
     found.content = String(params.newContent).trim();
 
     await this._debatesCollection.updateOne({
@@ -380,9 +376,7 @@ export class DebateService implements IService {
       createdBy: params.createdBy,
       type: DebateType.anouncement,
       state: DebateState.draft,
-      title: StringUtil.capitalize(
-        String(params.title).trim().toLowerCase()
-      ),
+      title: String(params.title).trim(),
       content: String(params.content).trim(),
       payload: {
         attachments: []
