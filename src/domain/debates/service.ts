@@ -13,9 +13,6 @@ import { PollDebate } from './core/pollDebate';
 import { IAttachment as IAttachmentInternal } from './core/IAttachment';
 import { IVote as IVoteInternal } from './core/IVote';
 
-// utils
-import * as StringUtil from '../../util/helpers/string';
-
 // types
 import {
   IDebate, IPollDebate, DebateType,
